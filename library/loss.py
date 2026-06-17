@@ -125,6 +125,16 @@ def conditional_loss(
             loss = torch.mean(loss)
         elif reduction == "sum":
             loss = torch.sum(loss)
+    elif loss_type == "logcosh":
+        diff = model_pred.float() - target.float()
+        pos_mask = diff > 0
+        logcosh_pos = diff + torch.nn.functional.softplus(-2 * diff) - math.log(2)
+        logcosh_neg = -diff + torch.nn.functional.softplus(2 * diff) - math.log(2)
+        loss = torch.where(pos_mask, logcosh_pos, logcosh_neg)
+        if reduction == "mean":
+            loss = torch.mean(loss)
+        elif reduction == "sum":
+            loss = torch.sum(loss)
     else:
         raise NotImplementedError(f"Unsupported Loss Type: {loss_type}")
     return loss
